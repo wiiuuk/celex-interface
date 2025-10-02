@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Chantiers{% endblock %}
+{% block header %}Gestion des Chantiers{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalChantier">
+        <i class="fas fa-plus me-2"></i>Nouveau Chantier
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Adresse</th>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Coordonnées</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chantier in chantiers %}
+                    <tr>
+                        <td>{{ chantier.id }}</td>
+                        <td>
+                            <strong>{{ chantier.nom }}</strong>
+                            {% if chantier.date_fin %}
+                                <span class="badge bg-{% if chantier.est_actif %}success{% else %}secondary{% endif %} ms-1">
+                                    {% if chantier.est_actif %}Actif{% else %}Terminé{% endif %}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ chantier.adresse[:60] }}{% if chantier.adresse|length > 60 %}...{% endif %}</small>
+                        </td>
+                        <td>{{ chantier.date_debut or 'Non définie' }}</td>
+                        <td>{{ chantier.date_fin or 'En cours' }}</td>
+                        <td>
+                            {% if chantier.latitude %}
+                                <span class="badge bg-success">GPS OK</span>
+                            {% else %}
+                                <span class="badge bg-warning">À géolocaliser</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="editerChantier({ chantierid })"
+                                    title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" 
+                                    onclick="geolocaliserChantier({ chantierid })"
+                                    title="Géolocaliser">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="supprimerChantier({chantierid })"
+                                    title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <i class="fas fa-hard-hat fa-2x mb-2 d-block"></i>
+                            Aucun chantier enregistré
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouveau Chantier -->
+<div class="modal fade" id="modalChantier" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('ajouter_chantier') }}" id="formChantier">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nouveau Chantier</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom du chantier *</label>
+                                <input type="text" class="form-control" name="nom" required 
+                                       placeholder="Ex: Construction Villa Abidjan">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Localisation *</label>
+                                <input type="text" class="form-control" name="adresse" required 
+                                       placeholder="Ex: Cocody, Abidjan, Côte d'Ivoire">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date de début</label>
+                                <input type="date" class="form-control" name="date_debut">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date de fin prévue</label>
+                                <input type="date" class="form-control" name="date_fin">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Informations supplémentaires</label>
+                        <textarea class="form-control" name="description" rows="3" 
+                                  placeholder="Description détaillée du chantier..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Conseil :</strong> Pour une meilleure précision de localisation, 
+                            indiquez une adresse complète (quartier, ville, pays).
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Enregistrer le chantier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Géolocalisation -->
+<div class="modal fade" id="modalGeoloc" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Géolocalisation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="geolocContent">
+                    <p>Géolocalisation en cours...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Fonction pour éditer un chantier
+function editerChantier(id) {
+    // Pour l'instant, redirection vers une page d'édition simple
+    if (confirm('Voulez-vous modifier ce chantier ?')) {
+        // Récupérer les données du chantier et pré-remplir le formulaire
+        fetch(`/get_chantier/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    // Pré-remplir le formulaire modal
+                    document.querySelector('input[name="nom"]').value = data.nom || '';
+                    document.querySelector('input[name="adresse"]').value = data.adresse || '';
+                    document.querySelector('input[name="date_debut"]').value = data.date_debut || '';
+                    document.querySelector('input[name="date_fin"]').value = data.date_fin || '';
+                    document.querySelector('textarea[name="description"]').value = data.description || '';
+                    
+                    // Changer l'action du formulaire pour l'édition
+                    document.getElementById('formChantier').action = `/modifier_chantier/${id}`;
+                    
+                    // Ouvrir le modal
+                    const modal = new bootstrap.Modal(document.getElementById('modalChantier'));
+                    modal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Impossible de charger les données du chantier');
+            });
+    }
+}
+
+// Fonction pour géolocaliser un chantier
+function geolocaliserChantier(id) {
+    const modal = new bootstrap.Modal(document.getElementById('modalGeoloc'));
+    const content = document.getElementById('geolocContent');
+    
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p>Géolocalisation en cours...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Simuler la géolocalisation (à intégrer avec l'API)
+    setTimeout(() => {
+        fetch(`/geolocaliser_chantier/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    content.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle me-2"></i>Géolocalisation réussie !</h6>
+                            <p class="mb-1"><strong>Latitude :</strong> ${data.latitude}</p>
+                            <p class="mb-1"><strong>Longitude :</strong> ${data.longitude}</p>
+                            <p class="mb-0"><strong>Adresse précise :</strong> ${data.adresse_complete}</p>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Les coordonnées GPS permettront de calculer les distances avec les fournisseurs.
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Géolocalisation limitée</h6>
+                            <p>${data.message || 'Impossible de géolocaliser précisément cette adresse.'}</p>
+                            <small>Vous pouvez préciser l'adresse manuellement pour améliorer la précision.</small>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-circle me-2"></i>Erreur de géolocalisation</h6>
+                        <p>Une erreur s'est produite lors de la géolocalisation.</p>
+                        <small>Vérifiez votre connexion internet et réessayez.</small>
+                    </div>
+                `;
+            });
+    }, 1500);
+}
+
+// Fonction pour supprimer un chantier
+function supprimerChantier(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce chantier ? Cette action est irréversible.')) {
+        fetch(`/supprimer_chantier/${id}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Chantier supprimé avec succès !');
+                    location.reload();
+                } else {
+                    alert('Erreur lors de la suppression : ' + (data.message || 'Erreur inconnue'));
+                }
+            })
+            .catch(error => {
+                alert('Erreur lors de la suppression : ' + error.message);
+            });
+    }
+}
+
+// Calcul automatique de la date de fin si date de début modifiée
+document.querySelector('input[name="date_debut"]')?.addEventListener('change', function(e) {
+    const dateDebut = new Date(e.target.value);
+    const dateFinInput = document.querySelector('input[name="date_fin"]');
+    
+    if (dateDebut && !dateFinInput.value) {
+        // Proposer une date de fin 6 mois plus tard par défaut
+        const dateFin = new Date(dateDebut);
+        dateFin.setMonth(dateFin.getMonth() + 6);
+        dateFinInput.valueAsDate = dateFin;
+    }
+});
+
+// Affichage dynamique des statuts des chantiers
+function mettreAJourStatuts() {
+    const aujourdhui = new Date().toISOString().split('T')[0];
+    
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const dateFinCell = row.cells[4].textContent;
+        if (dateFinCell && dateFinCell !== 'En cours') {
+            const dateFin = new Date(dateFinCell);
+            const aujourdhuiObj = new Date(aujourdhui);
+            
+            if (dateFin < aujourdhuiObj) {
+                // Chantier terminé
+                row.style.opacity = '0.7';
+            }
+        }
+    });
+}
+
+// Exécuter au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    mettreAJourStatuts();
+});
+</script>
+
+<style>
+.table-actions {
+    white-space: nowrap;
+    width: 140px;
+}
+
+.table-actions .btn {
+    margin: 0 2px;
+    padding: 0.25rem 0.5rem;
+}
+
+.badge {
+    font-size: 0.7em;
+}
+
+tr {
+    transition: opacity 0.3s ease;
+}
+</style>
+{% endblock %}

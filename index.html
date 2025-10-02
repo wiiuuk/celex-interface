@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.produits }}</h4>
+                        <p>Produits</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-box fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.fournisseurs }}</h4>
+                        <p>Fournisseurs</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-truck fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.chantiers }}</h4>
+                        <p>Chantiers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-hard-hat fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.offres }}</h4>
+                        <p>Offres Prix</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tags fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Derniers Produits Ajoutés</h5>
+            </div>
+            <div class="card-body">
+                {% if derniers_produits %}
+                    <div class="list-group">
+                        {% for produit in derniers_produits %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ produit.nom }}</h6>
+                                <small class="text-muted">{{ produit.categorie }} - {{ produit.unite }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun produit enregistré</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Chantiers Actifs</h5>
+            </div>
+            <div class="card-body">
+                {% if chantiers_actifs %}
+                    <div class="list-group">
+                        {% for chantier in chantiers_actifs %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">{{ chantier.nom }}</h6>
+                                <small class="text-muted">{{ chantier.adresse }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun chantier actif</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

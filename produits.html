@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Produits{% endblock %}
+{% block header %}Gestion des Produits{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProduit">
+        <i class="fas fa-plus me-2"></i>Nouveau Produit
+    </button>
+</div>
+
+<!-- Messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Catégorie</th>
+                        <th>Unité</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produit in produits %}
+                    <tr>
+                        <td>{{ produit.id }}</td>
+                        <td>{{ produit.nom }}</td>
+                        <td>{{ produit.categorie or '-' }}</td>
+                        <td>{{ produit.unite or '-' }}</td>
+                        <td>{{ produit.description[:50] if produit.description else '-' }}{% if produit.description and produit.description|length > 50 %}...{% endif %}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-btn" data-id="{{ produit.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="{{ produit.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">Aucun produit trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Produit -->
+<div class="modal fade" id="modalProduit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('ajouter_produit') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nouveau Produit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom du produit *</label>
+                        <input type="text" class="form-control" name="nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select class="form-select" name="categorie">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="Matériaux">Matériaux</option>
+                            <option value="Outillage">Outillage</option>
+                            <option value="Équipement">Équipement</option>
+                            <option value="Peinture">Peinture</option>
+                            <option value="Électricité">Électricité</option>
+                            <option value="Plomberie">Plomberie</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unité</label>
+                        <input type="text" class="form-control" name="unite" placeholder="kg, m, unité, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Méthode avec event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Édition
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            editerProduit(id);
+        });
+    });
+    
+    // Suppression
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            supprimerProduit(id);
+        });
+    });
+});
+
+function editerProduit(id) {
+    alert('Édition du produit ' + id + ' - À implémenter');
+}
+
+function supprimerProduit(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer le produit ' + id + ' ?')) {
+        // Méthode POST sécurisée
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('supprimer_produit') }}";
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'id';
+        input.value = id;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
